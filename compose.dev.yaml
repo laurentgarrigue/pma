@@ -1,0 +1,34 @@
+name: '${APPLICATION_NAME}'
+services:
+    myadmin:
+        container_name: ${PMA_CONTAINER_NAME}
+        image: ${PMA_IMAGE}
+        environment:
+            # 256 Mo
+            UPLOAD_LIMIT: 262144000
+            PMA_HOSTS: ${PMA_HOSTS}
+            PMA_VERBOSES: ${PMA_VERBOSES}
+        networks:
+            - pma_network
+            - traefiknetwork
+        logging:
+            driver: "json-file"
+            options:
+                max-size: 10m
+                max-file: 3
+        restart: unless-stopped
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.myadmin.rule=Host(`${PMA_HOST}`)"
+            - "traefik.http.routers.myadmin.entrypoints=websecure"
+            - "traefik.http.routers.myadmin.tls=true"
+            - "traefik.http.routers.myadmin.middlewares=myadmin-auth"
+            - "traefik.http.middlewares.myadmin-auth.basicauth.users=${TRAEFIK_USERS}"
+
+networks:
+    pma_network:
+        name: pma_network
+        external: true
+    traefiknetwork:
+        name: traefiknetwork
+        external: true
